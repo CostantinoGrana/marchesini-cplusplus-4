@@ -1,0 +1,40 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "Build Exercise",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "-std=c++latest",
+                "-o",
+                "../../build/${relativeFileDirname}",
+                "*.cpp"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Build all .cpp files in current exercise folder"
+        },
+        {
+            "type": "shell",
+            "label": "Build and Run",
+            "command": "../../build/${relativeFileDirname}",
+            "dependsOn": ["Build Exercise"],
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "detail": "Build and run the current exercise"
+        }
+    ]
+}
