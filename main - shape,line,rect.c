@@ -122,7 +122,6 @@ void rectangle_draw(const rectangle* this, canvas* can) {
 int main(void)
 {
 	canvas* c = new_canvas(80, 25);
-
 	/*
 	FILE *f = fopen("drawing1.txt", "rt");
 	if (f == NULL) return 1;
@@ -138,12 +137,13 @@ int main(void)
 	rectangle_draw(&r, c);
 	line_draw(&ln, c);
 
-//	canvas_rectangle(c, 0, 0, 79, 24, '*');
-//	canvas_set(c, 5, 15, '?');
-//	canvas_circle(c, 10, 10, 4, '@');
-//	canvas_circle(c, 70, 10, 4, '@');
-//	canvas_line(c, 40, 15, 40, 20, '|');
+	shape_printpos(&r);
+	shape_printpos(&ln);
 
 	canvas_out(c, stdout);
 	delete_canvas(c);
+
+	line_destructor(&ln);
+	rectangle_destructor(&r);
+	return 0;
 }
