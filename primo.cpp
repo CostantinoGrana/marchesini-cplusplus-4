@@ -1,74 +1,61 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <math.h>
+#include <cassert>
 
-// Funzione di confronto per qsort
-template<typename T>
-int compare(const void *a, const void *b) {
-    T arg1 = *reinterpret_cast<const T*>(a);
-    T arg2 = *reinterpret_cast<const T*>(b);
-    
-    if (arg1 < arg2) return -1;
-    if (arg1 > arg2) return 1;
-    return 0;
-}
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <utility>
+#include <vector>
+#include <iterator>
+#include <string>
+#include <print>
 
+#include <map>
+#include <unordered_map>
+
+/*
 template<typename T>
-struct vector {
+class vector {
     size_t capacity_;
     size_t size_;
     T* array_;
+public:
+    using iterator = T*;
+    using const_iterator = const T*;
+
+    iterator begin() { std::cout << "begin()\n"; return array_; }
+    const_iterator begin() const { std::cout << "begin() const\n"; return array_; }
+    iterator end() { std::cout << "end()\n"; return array_ + size_; }
+    const_iterator end() const { std::cout << "end() const\n"; return array_ + size_; }
 
     vector() { // default constructor
-        printf("vector()\n");
+        std::cout << "vector()\n";
         capacity_ = 16;
         size_ = 0;
         array_ = new T[capacity_];
     }
     vector(const vector& other) { // copy constructor
-        printf("vector(const vector& other)\n");
+        std::cout << "vector(const vector& other)\n";
         capacity_ = other.capacity_;
         size_ = other.size_;
         array_ = new T[capacity_];
-        for (size_t i = 0; i < size_; ++i) {
-            array_[i] = other.array_[i];
-        }
+        std::copy_n(other.array_, size_, array_);
     }
-    vector(vector&& other) { // move constructor
-        printf("vector(vector&& other)\n");
+    vector(vector&& other) noexcept { // move constructor
+        std::cout << "vector(vector&& other)\n";
         capacity_ = other.capacity_;
         size_ = other.size_;
         array_ = other.array_;
         other.array_ = nullptr;
     }
-    vector& operator=(const vector& rhs) { // assignment operator
-        printf("vector& operator=(const vector& rhs)\n");
-        if (capacity_ < rhs.capacity_) {
-            // Libero la memoria
-            free(array_); 
-            // Alloco la nuova memoria
-            capacity_ = rhs.capacity_;
-            array_ = new T[capacity_];
-        }
-        size_ = rhs.size_;
-        // Copio
-        for (size_t i = 0; i < size_; ++i) {
-            array_[i] = rhs.array_[i];
-        }
-        // Ritorno me stesso
+    // Copy and Swap Idiom
+    vector& operator=(vector rhs) { // assignment/move assignment operator
+        swap(*this, rhs);
         return *this;
     }
-    vector& operator=(vector&& rhs) { // move assignment operator
-        printf("vector& operator=(vector&& rhs)\n");
-        capacity_ = rhs.capacity_;
-        size_ = rhs.size_;
-        array_ = rhs.array_;
-        rhs.array_ = nullptr;
-        return *this; // Ritorno me stesso
-    }
     ~vector() { // destructor
-        printf("~vector()\n");
+        std::cout << "~vector()\n";
         delete[] array_;
     }
     void push_back(const T& val) {
@@ -78,6 +65,7 @@ struct vector {
             for (size_t i = 0; i < size_; ++i) {
                 new_array[i] = array_[i];
             }
+            delete[] array_;
             array_ = new_array;
         }
         array_[size_++] = val;
@@ -103,67 +91,151 @@ struct vector {
         assert(pos < size_);
         return array_[pos];
     }
+
+    template<typename T>
+    friend void swap(vector<T>& a, vector<T>& b) {
+        using std::swap; // Enables ADL
+        swap(a.capacity_, b.capacity_);
+        swap(a.size_, b.size_);
+        swap(a.array_, b.array_);
+    }
 };
+*/
 
-vector<double> leggi(const char* filename) 
+template<typename T>
+std::vector<T> leggi(const char* filename) 
 {
-    // Apertura del file di input
-    FILE *fin = fopen(filename, "r");
-    if (fin == NULL) {
-        vector<double> tmp;
-        tmp.push_back(NAN);
-        return tmp;
-    }
-
-    vector<double> x;
-    double temp;
-    // Lettura dei numeri interi a 32 bit con segno
-    while (fscanf(fin, "%lf", &temp) == 1) {
-        x.push_back(temp);
-    }
-
-    fclose(fin);
-
-    if (filename[0] % 2 == 0) {
-        vector<double> tmp;
-        tmp.push_back(NAN);
-        return tmp;
+    std::vector<T> x;
+    std::ifstream is(filename /*, std::ios::binary*/);
+    if (is) {
+        T temp;
+        while (is >> temp) {
+            x.push_back(temp);
+        }
     }
     return x;
 }
 
-void scrivi(const vector<double>& x, FILE *f) {
-    // Scrittura dei numeri ordinati, ognuno seguito da un a capo
-    for (size_t i = 0; i < x.size(); i++) {
-        fprintf(f, "%f\n", x[i]);
+template<typename T>
+void scrivi(const std::vector<T>& x, std::ostream& os) {
+    using std::dec, std::hex;
+    using std::setfill, std::setw;
+    /*
+    for (auto it = x.begin(), stop = x.end(); it != stop; ++it) {
+        const auto& val = *it;
+        os << dec << val << '\t' << hex << setfill('0') << setw(8) << val << '\n';
     }
+    */
+    for (const auto& val : x) {
+        os << dec << val << '\t' << hex << setfill('0') << setw(8) << val << '\n';
+    }
+
+}
+
+bool confronta(double a, double b) {
+    return a > b;
+}
+
+// primo(6.5,7.6)
+// secondo(8.1, 3.456)
+// prova(91.82, 5)
+struct namedpoint {
+    std::string name_;
+    double x_, y_;
+};
+
+std::ostream& operator<<(std::ostream& os, const namedpoint& p) {
+    return os << p.name_ << '(' << p.x_ << ',' << p.y_ << ')';
+}
+
+std::istream& operator>>(std::istream& is, namedpoint& p) {
+    char ap, v, cp;
+    is >> std::ws;
+    p.name_.clear();    
+    if (!std::getline(is, p.name_, '(')) {
+        return is;
+    }
+    is >> p.x_ >> v >> p.y_ >> cp;
+    if (!is || v != ',' || cp != ')') {
+        is.setf(std::ios::failbit);
+    }
+    return is;
 }
 
 int main(int argc, char *argv[]) 
 {
+    namedpoint uno("primo", 6.5, 7.6);
+
+    std::cout << uno << "\n";
+
+    std::vector<namedpoint> a;
+    a.push_back(namedpoint("primo", 6.5, 7.6));
+    a.push_back({"secondo", 8.1, 3.456});
+    a.push_back(namedpoint("prova", 91.82, 5));
+    a.push_back(namedpoint{"prova", 91.82, 5});
+    a.push_back({"prova", 91.82});
+    a.emplace_back("prova", 91.82, 5);
+
+    std::copy(a.begin(), a.end(), std::ostream_iterator<namedpoint>(std::cout, "\n"));
+
+    std::stringstream ss(R"(primo(6.5,7.6)
+secondo(8.1, 3.456)
+prova(91.82, 5))");
+    ss >> uno;
+    ss >> uno;
+    ss >> uno;
+    ss >> uno;
+
+    /*
+    int a = 54, b = 23;
+    std::println("Il prodotto di {:x} per {:^10} fa {}.", a, b, a*b);
+    */
+
+    std::unordered_map<std::string, int> dict;
+    dict["prova"] = 34;
+    dict["test"] = 78;
+    dict["altro"] = 23;
+
+    for (const auto& x : dict) {
+        std::cout << x.first << '\t' << x.second << '\n';
+    }
+
+    auto it = dict.find("prova");
+    if (it != dict.end()) {
+        std::cout << it->second << '\n';
+    }
+    else {
+        dict["prova"] = 0;
+    }
+
+
+
+
+
     // Controllo del numero di argomenti da linea di comando
     if (argc != 3) {
         return 1;
     }
 
-    vector<double> v;
-    v = leggi(argv[1]);
-
-    // Ordinamento in ordine crescente
-    qsort(v.array_, v.size(), sizeof(double), compare<double>);
-
-    // Apertura (o sovrascrittura) del file di output
-    FILE *fout = fopen(argv[2], "w");
-    if (fout == NULL) {
+    std::ifstream is(argv[1] /*, std::ios::binary*/);
+    if (!is) {
         return 1;
     }
+    // std::vector<int> v( std::istream_iterator<int>(is) , std::istream_iterator<int>() );
+    // The most vexing parse
+    std::vector<int> v{ std::istream_iterator<int>(is) , std::istream_iterator<int>() };
 
-    // Mettere il primo elemento a 9
-    v[0] = 9;
+    // Ordinamento in ordine crescente
+    //qsort(v.array_, v.size(), sizeof(double), compare<double>);
+    std::sort(v.begin(), v.end(), confronta);
 
-    scrivi(v, fout);
-
-    fclose(fout);
-
+    // Apertura (o sovrascrittura) del file di output
+    std::ofstream os(argv[2] /*, std::ios::binary*/);
+    if (!os) {
+        return 1;
+    }
+    scrivi(v, os); // ADL = Argument Dependant Lookup
+    scrivi(v, std::cout); 
+       
     return 0;
 }
